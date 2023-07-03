@@ -1,0 +1,12 @@
+makelaarsland:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: lassebenninga
+      dataset: airbyte_makelaarsland
+      threads: 3
+      timeout_seconds: 300
+      location: EU
+      priority: interactive
