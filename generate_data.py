@@ -487,9 +487,21 @@ df_sales_transaction_data = generate_sales_transaction_data(
     start_date, end_date, df_stroopwafels_made, df_promos
 )
 
-employee_data = generate_employee_data(10)
-shift_data = generate_shift_data(start_date, end_date, employee_data)
+df_employee_data = generate_employee_data(10)
+df_shift_data = generate_shift_data(start_date, end_date, df_employee_data)
 
-df_ratings = generate_ratings_data(100, start_date, end_date, employee_data)
+df_ratings = generate_ratings_data(100, start_date, end_date, df_employee_data)
 
-print(df_promos)
+
+# Outptut to Excel
+df_suppliers.to_excel("data/suppliers.xlsx", index=False)
+df_stroopwafel_product_ingredients.to_excel("data/stroopwafel_product_ingredients.xlsx", index=False)
+df_ingredient_supplies.to_excel("data/ingredient_supplies.xlsx", index=False)
+df_employee_data.to_excel("data/employee_data.xlsx", index=False)
+df_shift_data.to_excel("data/shift_data.xlsx", index=False)
+
+# Output to CSV
+df_sales_transaction_data.to_csv("data/sales_transaction_data.csv", index=False)
+
+# Output to JSON
+df_ratings.to_json("data/ratings.json", orient="records", lines=True)
