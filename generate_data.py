@@ -214,21 +214,19 @@ def generate_supplier_data() -> pd.DataFrame:
     supplier_id = 0
 
     for ingredient, ingredient_info in BASE_INGREDIENTS.items():
-        num_suppliers = random.randint(1, 2)  # 1 or 2 suppliers for each ingredient
 
-        for _ in range(num_suppliers):
-            supplier_info = {
-                "supplier_id": supplier_id,
-                "supplier_name": fake.company_suffix()
-                + " "
-                + ingredient_info["dutch_translation"]
-                + " Leverancier",
-                "supplier_type": ingredient,  # Use the English ingredient as supplier type
-                "supplier_address": fake.address(),
-                "supplier_contact": fake.phone_number(),
-            }
-            suppliers.append(supplier_info)
-            supplier_id += 1
+        supplier_info = {
+            "supplier_id": supplier_id,
+            "supplier_name": fake.company_suffix()
+            + " "
+            + ingredient_info["dutch_translation"]
+            + " Leverancier",
+            "supplier_type": ingredient,  # Use the English ingredient as supplier type
+            "supplier_address": fake.address(),
+            "supplier_contact": fake.phone_number(),
+        }
+        suppliers.append(supplier_info)
+        supplier_id += 1
 
     # Convert the list of dictionaries to a DataFrame
     df_suppliers = pd.DataFrame(suppliers)
