@@ -23,7 +23,7 @@ INGREDIENTS = {
 }
 
 
-def generate_supplier_data():
+def generate_supplier_data() -> pd.DataFrame:
     suppliers = []
     supplier_id = 0
 
@@ -35,7 +35,7 @@ def generate_supplier_data():
                 "supplier_id": supplier_id,
                 "supplier_name": fake.company_suffix()
                 + " "
-                + ingredient_info['Dutch']
+                + ingredient_info["Dutch"]
                 + " Leverancier",
                 "supplier_type": ingredient,  # Use the English ingredient as supplier type
                 "supplier_address": fake.address(),
@@ -49,7 +49,7 @@ def generate_supplier_data():
     return df_suppliers
 
 
-def generate_ingredient_supply_data(start_date, end_date, supplier_data):
+def generate_ingredient_supply_data(start_date, end_date, supplier_data: pd.DataFrame):
     supplies = []
     for single_date in pd.date_range(start=start_date, end=end_date):
         # Estimate sales for the day
@@ -96,17 +96,106 @@ def generate_ingredient_supply_data(start_date, end_date, supplier_data):
     return df_supplies
 
 
-# Define a function for each data category
-def create_ingredient_supply_data(n, suppliers):
-    data_ingredient = []
-    for _ in range(n):
-        data_ingredient.append(
-            {
-                "IngredientName": fake.word(ext_word_list=INGREDIENTS),
-                "QuantityOnHand": random.randint(50, 200),
-                "CostPerUnit": round(random.uniform(0.5, 2.0), 2),  # Adjusted to Euros
-                "Supplier": fake.company(),
-            }
-        )
-    return pd.DataFrame(data_ingredient)
+def generate_sales_transaction_data(start_date, end_date, supply_data):
+    transaction_data = []
+    transaction_id = 0
 
+    for single_date in pd.date_range(start=start_date, end=end_date):
+        # Extract daily supply info
+        daily_supply = supply_data[
+            supply_data["date"] == single_date.strftime("%Y-%m-%d")
+        ]
+
+        # The number of stroopwafels sold is based on the ingredient that ran out first
+        stroopwafels_possible = min(
+            (
+                daily_supply["initial_quantity"]
+                + daily_supply["quantity_supplied"]
+                - daily_supply["end_quantity"]
+            )
+            / daily_supply["ingredient"].map(
+                lambda x: INGREDIENTS[x]["Per Stroopwafel"]
+            )
+        )
+
+        # Distribute the sales across a random number of transactions
+        total_sold = int(stroopwafels_possible * random.uniform(0.9, 1.0))
+
+        while total_sold > 0:
+            # Each transaction sells between 1 and 5 stroopwafels
+            quantity_sold = min(random.randint(1, 5), total_sold)
+            total_sold -= quantity_sold
+
+            transaction_info = {
+                "transaction_id": transaction_id,
+                "date": single_date.strftime("%Y-%m-%d"),
+                "time": fake.time(),  # Random time
+                "weekday": single_date.day_name(),
+                "quantity_sold": quantity_sold,
+                "unit_price": 2.50,  # €2.50 per stroopwafel
+                "total_price": quantity_sold * 2.50,
+            }
+            transaction_data.append(transaction_info)
+
+            transaction_id += 1
+
+    # Convert the list of dictionaries to a DataFrame
+    df_transactions = pd.DataFrame(transaction_data)
+    return df_transactions
+
+
+def generate_waste_data(start_date, end_date, supply_data):
+    waste = []
+
+    for single_date in pd.date_range(start=start_date, end=end_date):
+        # Extract daily supply info
+        daily_supply = supply_data[
+            supply_data["date"] == single_date.strftime("%Y-%m-%d")
+        ]
+
+        # The number of stroopwafels sold is based on the ingredient that ran out first
+        stroopwafels_possible = min(
+            (
+                daily_supply["initial_quantity"]
+                + daily_supply["quantity_supplied"]
+                - daily_supply["end_quantity"]
+            )
+            / daily_supply["ingredient"].map(
+                lambda x: INGREDIENTS[x]["Per Stroopwafel"]
+            )
+        )
+
+        # The number of stroopwafels made is a bit more than the number sold
+        stroopwafels_made = int(stroopwafels_possible * random.uniform(1.05, 1.2))
+
+        # The number of stroopwafels sold is a bit less than the number possible
+        stroopwafels_sold = int(stroopwafels_possible * random.uniform(0.9, 1.0))
+
+        sale_info = {
+            "date": single_date.strftime("%Y-%m-%d"),
+            "weekday": single_date.day_name(),
+            "stroopwafels_made": stroopwafels_made,
+            "stroopwafels_sold": stroopwafels_sold,
+        }
+        waste.append(sale_info)
+
+    # Convert the list of dictionaries to a DataFrame
+    df_sales = pd.DataFrame(waste)
+    return df_sales
+
+
+# Get supplier data first
+df_suppliers = generate_supplier_data()
+
+# Generate ingredient supply data for June 2023
+start_date = datetime(2023, 6, 1)
+end_date = datetime(2023, 6, 30)
+df_ingredient_supplies = generate_ingredient_supply_data(
+    start_date, end_date, df_suppliers
+)
+
+df_sales_transaction_data = generate_sales_transaction_data(
+    start_date, end_date, df_ingredient_supplies
+)
+
+print(df_sales_transaction_data)
