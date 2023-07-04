@@ -14,6 +14,8 @@ NUMBER_OF_RECORDS = 1000  # Number of records for each dataset
 
 NUMBER_OF_EMPLOYEES = 10
 
+STROOPWAFEL_PRICE = 3.00
+
 INGREDIENTS = {
     "Flour": {"Dutch": "Bloem", "Unit Cost": 0.50, "Per Stroopwafel": 30},
     "Brown Sugar": {"Dutch": "Bruine Suiker", "Unit Cost": 0.75, "Per Stroopwafel": 15},
@@ -46,6 +48,46 @@ def generate_stroopwafels_made(start_date, end_date) -> pd.DataFrame:
         made.append(supply_info)
 
     return pd.DataFrame(made)
+
+
+# Promotions
+def generate_promotions_data(n, start_date, end_date):
+    promotions = []
+    promo_names = [
+        "Sweet Deal",
+        "Double Delight",
+        "Cinnamon Surprise",
+        "Honey-dipped Heaven",
+        "Vanilla Value",
+    ]
+    promo_descriptions = [
+        "Buy one stroopwafel, get one free!",
+        "Two stroopwafels for the price of one!",
+        "Get a surprise free gift with every stroopwafel!",
+        "Try our new honey-dipped stroopwafel!",
+        "Special discount on our vanilla stroopwafel!",
+    ]
+
+    for i in range(n):
+        start_promo_date = fake.date_between(start_date=start_date, end_date=end_date)
+        end_promo_date = start_promo_date + timedelta(
+            days=random.randint(1, 7)
+        )  # promotions last between 1 to 7 days
+        promotion_info = {
+            "promotion_id": i,
+            "promotion_name": random.choice(promo_names),
+            "start_date": start_promo_date.strftime("%Y-%m-%d"),
+            "end_date": end_promo_date.strftime("%Y-%m-%d"),
+            "description": random.choice(promo_descriptions),
+            "discount_rate": random.uniform(
+                0.1, 0.3
+            ),  # discount rate between 10% and 30%
+            "is_holiday": random.choice([True, False]),
+        }
+        promotions.append(promotion_info)
+
+    df_promotions = pd.DataFrame(promotions)
+    return df_promotions
 
 
 def generate_supplier_data() -> pd.DataFrame:
@@ -122,7 +164,9 @@ def generate_ingredient_supply_data(
     return df_supplies
 
 
-def generate_sales_transaction_data(start_date, end_date, df_stroopwafels_made):
+def generate_sales_transaction_data(
+    start_date, end_date, df_stroopwafels_made, df_promotions
+):
     transaction_data = []
     transaction_id = 0
 
@@ -134,10 +178,19 @@ def generate_sales_transaction_data(start_date, end_date, df_stroopwafels_made):
 
         total_sold = int(stroopwafels_made * random.uniform(0.9, 1.0))
 
+        # check if there's a promotion on this date
+        discount_rate = 1.0
+        for _, promo in df_promos.iterrows():
+            if promo["start_date"] <= str(single_date.date()) <= promo["end_date"]:
+                discount_rate -= promo["discount_rate"]  # apply discount
+                break
+
         while total_sold > 0:
             # Each transaction sells between 1 and 5 stroopwafels
             quantity_sold = min(random.randint(1, 5), total_sold)
             total_sold -= quantity_sold
+
+            price = STROOPWAFEL_PRICE * discount_rate
 
             transaction_info = {
                 "transaction_id": transaction_id,
@@ -145,8 +198,8 @@ def generate_sales_transaction_data(start_date, end_date, df_stroopwafels_made):
                 "time": fake.time(),  # Random time
                 "weekday": single_date.day_name(),
                 "quantity_sold": quantity_sold,
-                "unit_price": 2.50,  # €2.50 per stroopwafel
-                "total_price": quantity_sold * 2.50,
+                "unit_price": price, 
+                "total_price": quantity_sold * price,
             }
             transaction_data.append(transaction_info)
 
@@ -154,6 +207,11 @@ def generate_sales_transaction_data(start_date, end_date, df_stroopwafels_made):
 
     # Convert the list of dictionaries to a DataFrame
     df_transactions = pd.DataFrame(transaction_data)
+
+    df_transactions['total_price'] = df_transactions['total_price'].round(2)
+    df_transactions['unit_price'] = df_transactions['unit_price'].round(2)
+
+
     return df_transactions
 
 
@@ -253,16 +311,22 @@ def generate_ratings_data(n, start_date, end_date, employee_data):
 # Get supplier data first
 df_suppliers = generate_supplier_data()
 
+
 # Generate ingredient supply data for June 2023
 start_date = datetime(2023, 6, 1)
 end_date = datetime(2023, 6, 30)
+
+# Generate some promos
+df_promos = generate_promotions_data(5, start_date, end_date)
+
 df_stroopwafels_made = generate_stroopwafels_made(start_date, end_date)
+
 df_ingredient_supplies = generate_ingredient_supply_data(
     start_date, end_date, df_stroopwafels_made, df_suppliers
 )
 
 df_sales_transaction_data = generate_sales_transaction_data(
-    start_date, end_date, df_stroopwafels_made
+    start_date, end_date, df_stroopwafels_made, df_promos
 )
 
 employee_data = generate_employee_data(10)
@@ -270,4 +334,4 @@ shift_data = generate_shift_data(start_date, end_date, employee_data)
 
 df_ratings = generate_ratings_data(100, start_date, end_date, employee_data)
 
-print(df_ratings)
+print(df_promos)
