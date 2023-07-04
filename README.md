@@ -15,3 +15,18 @@
 - Website and Online Sales Data: If you sell stroopwafels online, data about your website traffic, online sales, and digital marketing efforts could be very useful.
 
 - Competitor Data: While this can be harder to come by, any information you can gather about your competitors can also provide valuable insights for your business.
+
+- See the sales per day, per employee, to see if certain employees sell more. Perhaps look at the waster per day per employee as well.
+
+- See profitability per location. 
+
+- See waste per location.
+
+
+### Sources
+
+- https://www.getdbt.com/blog/how-do-you-decide-what-to-model-in-dbt-vs-lookml/ 
+
+- https://www.holistics.io/books/setup-analytics/kimball-s-dimensional-data-modeling/
+
+- 

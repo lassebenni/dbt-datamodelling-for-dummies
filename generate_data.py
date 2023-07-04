@@ -1,171 +1,112 @@
 from faker import Faker
 import random
 import pandas as pd
+from datetime import datetime, timedelta
 
-fake = Faker()
+fake = Faker("nl_NL")  # Use Dutch locale
+
+NUMBER_OF_RECORDS = 1000  # Number of records for each dataset
+
+
+INGREDIENTS = {
+    "Flour": {"Dutch": "Bloem", "Unit Cost": 0.50, "Per Stroopwafel": 30},
+    "Brown Sugar": {"Dutch": "Bruine Suiker", "Unit Cost": 0.75, "Per Stroopwafel": 15},
+    "Butter": {"Dutch": "Boter", "Unit Cost": 8.00, "Per Stroopwafel": 15},
+    "Eggs": {"Dutch": "Eieren", "Unit Cost": 0.20, "Per Stroopwafel": 0.1},
+    "Cinnamon": {"Dutch": "Kaneel", "Unit Cost": 10.00, "Per Stroopwafel": 1},
+    "Yeast": {"Dutch": "Gist", "Unit Cost": 1.00, "Per Stroopwafel": 1},
+    "Molasses": {"Dutch": "Melasse", "Unit Cost": 2.00, "Per Stroopwafel": 10},
+    "Salt": {"Dutch": "Zout", "Unit Cost": 0.50, "Per Stroopwafel": 0.5},
+    "Vanilla": {"Dutch": "Vanille", "Unit Cost": 15.00, "Per Stroopwafel": 0.5},
+    "Milk": {"Dutch": "Melk", "Unit Cost": 0.75, "Per Stroopwafel": 10},
+    "Honey": {"Dutch": "Honing", "Unit Cost": 5.00, "Per Stroopwafel": 5},
+}
+
+
+def generate_supplier_data():
+    suppliers = []
+    supplier_id = 0
+
+    for ingredient, ingredient_info in INGREDIENTS.items():
+        num_suppliers = random.randint(1, 2)  # 1 or 2 suppliers for each ingredient
+
+        for _ in range(num_suppliers):
+            supplier_info = {
+                "supplier_id": supplier_id,
+                "supplier_name": fake.company_suffix()
+                + " "
+                + ingredient_info['Dutch']
+                + " Leverancier",
+                "supplier_type": ingredient,  # Use the English ingredient as supplier type
+                "supplier_address": fake.address(),
+                "supplier_contact": fake.phone_number(),
+            }
+            suppliers.append(supplier_info)
+            supplier_id += 1
+
+    # Convert the list of dictionaries to a DataFrame
+    df_suppliers = pd.DataFrame(suppliers)
+    return df_suppliers
+
+
+def generate_ingredient_supply_data(start_date, end_date, supplier_data):
+    supplies = []
+    for single_date in pd.date_range(start=start_date, end=end_date):
+        # Estimate sales for the day
+        stroopwafels_sold = (
+            random.randint(300, 1000)
+            if single_date.day_name() not in ["Saturday", "Sunday"]
+            else random.randint(500, 1200)
+        )
+
+        for ingredient, info in INGREDIENTS.items():
+            # Randomly select a supplier for the ingredient
+            supplier_id = (
+                supplier_data[supplier_data["supplier_type"] == ingredient]
+                .sample()["supplier_id"]
+                .values[0]
+            )
+
+            # Estimate usage based on sales
+            quantity_used = info["Per Stroopwafel"] * stroopwafels_sold
+
+            # Add a buffer to the initial quantity and supplied quantity
+            initial_quantity = quantity_used + random.randint(100, 500)
+            quantity_supplied = quantity_used + random.randint(100, 500)
+
+            end_quantity = (
+                initial_quantity + quantity_supplied - quantity_used
+            )  # Calculate end quantity
+
+            supply_info = {
+                "date": single_date.strftime("%Y-%m-%d"),
+                "weekday": single_date.day_name(),
+                "ingredient": ingredient,
+                "supplier_id": supplier_id,
+                "initial_quantity": initial_quantity,
+                "quantity_supplied": quantity_supplied,
+                "quantity_used": quantity_used,
+                "end_quantity": end_quantity,
+                "unit_cost": info["Unit Cost"],
+            }
+            supplies.append(supply_info)
+
+    # Convert the list of dictionaries to a DataFrame
+    df_supplies = pd.DataFrame(supplies)
+    return df_supplies
 
 
 # Define a function for each data category
-def create_ingredient_supply_data(n):
+def create_ingredient_supply_data(n, suppliers):
     data_ingredient = []
     for _ in range(n):
         data_ingredient.append(
             {
-                "IngredientName": fake.word(
-                    ext_word_list=[
-                        "Flour",
-                        "Sugar",
-                        "Butter",
-                        "Eggs",
-                        "Cinnamon",
-                        "Yeast",
-                    ]
-                ),
+                "IngredientName": fake.word(ext_word_list=INGREDIENTS),
                 "QuantityOnHand": random.randint(50, 200),
-                "CostPerUnit": round(random.uniform(0.5, 5.0), 2),
+                "CostPerUnit": round(random.uniform(0.5, 2.0), 2),  # Adjusted to Euros
                 "Supplier": fake.company(),
             }
         )
     return pd.DataFrame(data_ingredient)
 
-
-def create_employee_data(n):
-    data_employee = []
-    for _ in range(n):
-        data_employee.append(
-            {
-                "EmployeeName": fake.name(),
-                "HoursWorked": random.randint(20, 40),
-                "Role": random.choice(["Baker", "Sales", "Manager"]),
-                "PerformanceRating": random.choice(
-                    ["Poor", "Average", "Good", "Excellent"]
-                ),
-            }
-        )
-    return pd.DataFrame(data_employee)
-
-
-def create_customer_feedback_data(n):
-    data_feedback = []
-    for _ in range(n):
-        data_feedback.append(
-            {
-                "CustomerName": fake.name(),
-                "Feedback": fake.text(),
-                "Rating": random.randint(1, 5),
-            }
-        )
-    return pd.DataFrame(data_feedback)
-
-
-def create_advertising_data(n):
-    data_advertising = []
-    for _ in range(n):
-        data_advertising.append(
-            {
-                "CampaignName": fake.catch_phrase(),
-                "StartDate": fake.date(),
-                "EndDate": fake.date(),
-                "Cost": round(random.uniform(500.0, 5000.0), 2),
-                "Impressions": random.randint(1000, 10000),
-                "Clicks": random.randint(100, 1000),
-            }
-        )
-    return pd.DataFrame(data_advertising)
-
-
-def create_waste_data(n):
-    data_waste = []
-    for _ in range(n):
-        data_waste.append(
-            {
-                "Date": fake.date(),
-                "WastedStroopwafels": random.randint(0, 20),
-                "WastedIngredientsCost": round(random.uniform(5.0, 50.0), 2),
-            }
-        )
-    return pd.DataFrame(data_waste)
-
-
-def create_online_sales_data(n):
-    data_online = []
-    for _ in range(n):
-        data_online.append(
-            {
-                "OrderDate": fake.date(),
-                "Quantity": random.randint(1, 10),
-                "CustomerLocation": fake.country(),
-                "WebsiteVisits": random.randint(1000, 5000),
-            }
-        )
-    return pd.DataFrame(data_online)
-
-
-def create_customer_data(n):
-    data_customer = []
-    for _ in range(n):
-        data_customer.append(
-            {
-                "CustomerName": fake.name(),
-                "CustomerAddress": fake.address(),
-                "ContactDetails": fake.phone_number(),
-            }
-        )
-    return pd.DataFrame(data_customer)
-
-
-# Define function for generating order data
-def create_order_data(n):
-    data_order = []
-    for _ in range(n):
-        data_order.append(
-            {
-                "OrderDate": fake.date(),
-                "Quantity": random.randint(1, 10),
-                "Product": "Stroopwafel",
-                "Price": round(random.uniform(1.5, 3.5), 2),
-                "DeliveryMethod": random.choice(["Pickup", "Shipped"]),
-            }
-        )
-    return pd.DataFrame(data_order)
-
-
-def create_production_data(n):
-    data_production = []
-    for _ in range(n):
-        data_production.append(
-            {
-                "ProductionDate": fake.date(),
-                "QuantityProduced": random.randint(50, 200),
-                "ProductionCost": round(random.uniform(30.0, 100.0), 2),
-            }
-        )
-    return pd.DataFrame(data_production)
-
-
-number_of_records = 100  # Number of records for each dataset
-ingredient_supply_data = create_ingredient_supply_data(number_of_records)
-employee_data = create_employee_data(number_of_records)
-customer_feedback_data = create_customer_feedback_data(number_of_records)
-advertising_data = create_advertising_data(number_of_records)
-waste_data = create_waste_data(number_of_records)
-online_sales_data = create_online_sales_data(number_of_records)
-customer_data = create_customer_data(number_of_records)
-order_data = create_order_data(number_of_records)
-production_data = create_production_data(number_of_records)
-
-
-# Write the data to JSON files
-ingredient_supply_data.to_json(
-    "ingredient_supply_data.json", orient="records", lines=True
-)
-employee_data.to_json("employee_data.json", orient="records", lines=True)
-customer_feedback_data.to_json(
-    "customer_feedback_data.json", orient="records", lines=True
-)
-advertising_data.to_json("advertising_data.json", orient="records", lines=True)
-waste_data.to_json("waste_data.json", orient="records", lines=True)
-online_sales_data.to_json("online_sales_data.json", orient="records", lines=True)
-customer_data.to_json("customer_data.json", orient="records", lines=True)
-order_data.to_json("order_data.json", orient="records", lines=True)
-production_data.to_json("production_data.json", orient="records", lines=True)
