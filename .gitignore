@@ -1,3 +1,4 @@
 #launch.json folder
 .vscode/
 .venv
+__pycache__
