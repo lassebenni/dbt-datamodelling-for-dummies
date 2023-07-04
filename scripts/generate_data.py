@@ -495,16 +495,23 @@ df_ratings = generate_ratings_data(100, start_date, end_date, df_employee_data)
 
 
 # Outptut to Excel
-df_suppliers.to_excel("data/suppliers.xlsx", index=False)
+df_suppliers.to_excel("../data/suppliers.xlsx", index=False)
 df_stroopwafel_product_ingredients.to_excel(
-    "data/stroopwafel_product_ingredients.xlsx", index=False
+    "../data/stroopwafel_product_ingredients.xlsx", index=False
 )
-df_ingredient_supplies.to_excel("data/ingredient_supplies.xlsx", index=False)
-df_employee_data.to_excel("data/employee_data.xlsx", index=False)
-df_shift_data.to_excel("data/shift_data.xlsx", index=False)
+df_ingredient_supplies.to_excel("../data/ingredient_supplies.xlsx", index=False)
+df_employee_data.to_excel("../data/employee_data.xlsx", index=False)
+df_shift_data.to_excel("../data/shift_data.xlsx", index=False)
 
 # Output to CSV
-df_sales_transaction_data.to_csv("data/sales_transaction_data.csv", index=False)
+df_sales_transaction_data.to_csv("../data/sales_transaction_data.csv", index=False)
+df_suppliers.to_csv("../data/suppliers.csv", index=False)
+df_stroopwafel_product_ingredients.to_csv(
+    "../data/stroopwafel_product_ingredients.csv", index=False
+)
+df_ingredient_supplies.to_csv("../data/ingredient_supplies.csv", index=False)
+df_employee_data.to_csv("../data/employee_data.csv", index=False)
+df_shift_data.to_csv("../data/shift_data.csv", index=False)
 
 # Output to JSON
-df_ratings.to_json("data/ratings.json", orient="records", lines=True)
+df_ratings.to_json("../data/ratings.json", orient="records", lines=True)
