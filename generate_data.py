@@ -163,7 +163,10 @@ def generate_stroopwafels_made(start_date, end_date) -> pd.DataFrame:
             }
             made.append(supply_info)
 
-    return pd.DataFrame(made)
+    df_made = pd.DataFrame(made)
+    df_made["made"] = df_made["made"].apply(np.ceil)
+
+    return df_made
 
 
 # Promotions
@@ -256,8 +259,12 @@ def generate_ingredient_supply_data(
                 ]["made"].values[0]
 
                 # Get the quantity of the ingredient used in the product
-                df_ingredients = df_stroopwafel_product_ingredients[df_stroopwafel_product_ingredients["product_name"] == product]
-                quantity = df_ingredients[df_ingredients["ingredient"] == ingredient][ "quantity" ].values[0]
+                df_ingredients = df_stroopwafel_product_ingredients[
+                    df_stroopwafel_product_ingredients["product_name"] == product
+                ]
+                quantity = df_ingredients[df_ingredients["ingredient"] == ingredient][
+                    "quantity"
+                ].values[0]
                 quantity_used = quantity * stroopwafels_made
 
                 # Add a buffer to the initial quantity and supplied quantity
@@ -299,39 +306,54 @@ def generate_sales_transaction_data(
     transaction_id = 0
 
     for single_date in pd.date_range(start=start_date, end=end_date):
-        # Calculate the amount of stroopwafels sold and distribute the sales across a random number of transactions
-        stroopwafels_made = df_stroopwafels_made[
+        df_total_made_per_day = df_stroopwafels_made[
             df_stroopwafels_made["date"] == str(single_date.date())
-        ]["made"].values[0]
+        ]
 
-        total_sold = int(stroopwafels_made * random.uniform(0.9, 1.0))
+        for product in df_total_made_per_day["product"].unique():
+            product_sales = df_total_made_per_day[
+                df_total_made_per_day["product"] == product
+            ]
 
-        # check if there's a promotion on this date
-        discount_rate = 1.0
-        for _, promo in df_promos.iterrows():
-            if promo["start_date"] <= str(single_date.date()) <= promo["end_date"]:
-                discount_rate -= promo["discount_rate"]  # apply discount
-                break
+            stroopwafels_made = product_sales["made"].values[0]
 
-        while total_sold > 0:
-            # Each transaction sells between 1 and 5 stroopwafels
-            quantity_sold = min(random.randint(1, 5), total_sold)
-            total_sold -= quantity_sold
+            total_sold = int(stroopwafels_made * random.uniform(0.9, 1.0))
 
-            price = STROOPWAFEL_PRICE * discount_rate
+            # check if there's a promotion on this date
+            discount_rate = 1.0
+            for _, promo in df_promotions.iterrows():
+                if promo["start_date"] <= str(single_date.date()) <= promo["end_date"]:
+                    discount_rate -= promo["discount_rate"]  # apply discount
+                    break
 
-            transaction_info = {
-                "transaction_id": transaction_id,
-                "date": single_date.strftime("%Y-%m-%d"),
-                "time": fake.time(),  # Random time
-                "weekday": single_date.day_name(),
-                "quantity_sold": quantity_sold,
-                "unit_price": price,
-                "total_price": quantity_sold * price,
-            }
-            transaction_data.append(transaction_info)
+            while total_sold > 0:
+                # Each transaction sells between 1 and 5 stroopwafels
+                quantity_sold = min(random.randint(1, 5), total_sold)
+                total_sold -= quantity_sold
 
-            transaction_id += 1
+                price = STROOPWAFEL_PRICE * discount_rate
+
+                random_time = fake.date_time_between_dates(
+                    datetime_start=datetime.now().replace(
+                        hour=10, minute=0, second=0
+                    ),
+                    datetime_end=datetime.now().replace(
+                        hour=18, minute=0, second=0
+                    ),
+                ).time()
+                transaction_info = {
+                    "transaction_id": transaction_id,
+                    "date": single_date.strftime("%Y-%m-%d"),
+                    "time": random_time,  # Random time
+                    "weekday": single_date.day_name(),
+                    "product": product,
+                    "quantity_sold": quantity_sold,
+                    "unit_price": price,
+                    "total_price": quantity_sold * price,
+                }
+                transaction_data.append(transaction_info)
+
+                transaction_id += 1
 
     # Convert the list of dictionaries to a DataFrame
     df_transactions = pd.DataFrame(transaction_data)
