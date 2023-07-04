@@ -5,8 +5,14 @@ from datetime import datetime, timedelta
 
 fake = Faker("nl_NL")  # Use Dutch locale
 
+MIN_SALES_WEEK_DAY = 300
+MAX_SALES_WEEK_DAY = 1000
+MIN_SALES_WEEKEND = 500
+MAX_SALES_WEEKEND = 2000
+
 NUMBER_OF_RECORDS = 1000  # Number of records for each dataset
 
+NUMBER_OF_EMPLOYEES = 10
 
 INGREDIENTS = {
     "Flour": {"Dutch": "Bloem", "Unit Cost": 0.50, "Per Stroopwafel": 30},
@@ -27,9 +33,9 @@ def generate_stroopwafels_made(start_date, end_date) -> pd.DataFrame:
     made = []
     for single_date in pd.date_range(start=start_date, end=end_date):
         stroopwafels_sold = (
-            random.randint(300, 1000)
+            random.randint(MIN_SALES_WEEK_DAY, MAX_SALES_WEEK_DAY)
             if single_date.day_name() not in ["Saturday", "Sunday"]
-            else random.randint(500, 1200)
+            else random.randint(MIN_SALES_WEEKEND, MAX_SALES_WEEKEND)
         )
 
         supply_info = {
@@ -40,28 +46,6 @@ def generate_stroopwafels_made(start_date, end_date) -> pd.DataFrame:
         made.append(supply_info)
 
     return pd.DataFrame(made)
-
-
-# def calculate_possible_stroopwafels(df_daily_supply: pd.DataFrame):
-#     """
-#     Function to calculate the maximum number of stroopwafels that can be made based on the daily supply of ingredients.
-
-#     Parameters:
-#     daily_supply (DataFrame): A DataFrame containing the daily supply data.
-
-#     Returns:
-#     int: The maximum number of stroopwafels that can be made.
-#     """
-#     stroopwafels_possible = min(
-#         (
-#             df_daily_supply["initial_quantity"]
-#             + df_daily_supply["quantity_supplied"]
-#             - df_daily_supply["end_quantity"]
-#         )
-#         / df_daily_supply["ingredient"].map(lambda x: INGREDIENTS[x]["Per Stroopwafel"])
-#     )
-
-#     return stroopwafels_possible
 
 
 def generate_supplier_data() -> pd.DataFrame:
@@ -173,6 +157,99 @@ def generate_sales_transaction_data(start_date, end_date, df_stroopwafels_made):
     return df_transactions
 
 
+def generate_employee_data(n):
+    employees = []
+    positions = ["Cashier", "Baker"]
+
+    for i in range(n):
+        position = positions[i % 2]
+
+        employee_info = {
+            "employee_id": i,
+            "employee_name": fake.first_name(),
+            "employee_contact": fake.phone_number(),
+            "position": position,
+        }
+        employees.append(employee_info)
+
+    df_employees = pd.DataFrame(employees)
+    return df_employees
+
+
+def generate_shift_data(start_date, end_date, employee_data):
+    shift_data = []
+    shift_hours = ["10:00-14:00", "14:00-18:00"]
+
+    for single_date in pd.date_range(start=start_date, end=end_date):
+        for employee_id in employee_data["employee_id"].unique():
+            shift_info = {
+                "date": single_date.strftime("%Y-%m-%d"),
+                "weekday": single_date.day_name(),
+                "employee_id": employee_id,
+                "shift_hours": random.choice(shift_hours),
+            }
+            shift_data.append(shift_info)
+
+    df_shifts = pd.DataFrame(shift_data)
+    return df_shifts
+
+
+# Reviews
+
+
+def generate_ratings_data(n, start_date, end_date, employee_data):
+    ratings = []
+    positive_descriptions = [
+        "Great service",
+        "Delicious stroopwafels",
+        "Love this place!",
+        "Will come back soon",
+        "The best in Amsterdam",
+    ]
+    negative_descriptions = [
+        "Needs improvement",
+        "Not the best stroopwafel I've had",
+        "Service could be better",
+        "Disappointed",
+        "Not what I expected",
+    ]
+    special_terms = [
+        "stroopwafel",
+        "delicious",
+        "Amsterdam",
+        "lovely",
+        "the Dam",
+        "#stroopwafel",
+    ]
+
+    for i in range(n):
+        sentiment = random.choice(
+            [True, False]
+        )  # True for positive sentiment, False for negative sentiment
+        if sentiment:
+            description = random.choice(positive_descriptions)
+        else:
+            description = random.choice(negative_descriptions)
+
+        description += ". " + random.choice(special_terms)
+        description += ". " + random.choice(
+            ["Special thanks to " + random.choice(employee_data["employee_name"]), ""]
+        )
+
+        rating_info = {
+            "rating_id": i,
+            "date": fake.date_between(
+                start_date=start_date, end_date=end_date
+            ).strftime("%Y-%m-%d"),
+            "star_rating": random.randint(1, 5),
+            "description": description,
+        }
+        ratings.append(rating_info)
+
+    df_ratings = pd.DataFrame(ratings).reset_index(drop=True)
+    return df_ratings
+
+
 # Get supplier data first
 df_suppliers = generate_supplier_data()
 
@@ -188,5 +265,9 @@ df_sales_transaction_data = generate_sales_transaction_data(
     start_date, end_date, df_stroopwafels_made
 )
 
+employee_data = generate_employee_data(10)
+shift_data = generate_shift_data(start_date, end_date, employee_data)
 
-print(df_sales_transaction_data)
+df_ratings = generate_ratings_data(100, start_date, end_date, employee_data)
+
+print(df_ratings)
