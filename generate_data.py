@@ -12,7 +12,7 @@ MAX_SALES_WEEKEND = 2000
 
 NUMBER_OF_RECORDS = 1000  # Number of records for each dataset
 
-NUMBER_OF_EMPLOYEES = 10
+NUMBER_OF_EMPLOYEES = 20
 
 STROOPWAFEL_PRICE = 3.00
 PRICE_MARKUP = 1.5
@@ -193,7 +193,7 @@ def generate_promotions_data(n, start_date, end_date):
             days=random.randint(1, 7)
         )  # promotions last between 1 to 7 days
         promotion_info = {
-            "promotion_id": i,
+            # "promotion_id": i,
             "promotion_name": random.choice(promo_names),
             "start_date": start_promo_date.strftime("%Y-%m-%d"),
             "end_date": end_promo_date.strftime("%Y-%m-%d"),
@@ -214,9 +214,8 @@ def generate_supplier_data() -> pd.DataFrame:
     supplier_id = 0
 
     for ingredient, ingredient_info in BASE_INGREDIENTS.items():
-
         supplier_info = {
-            "supplier_id": supplier_id,
+            # "supplier_id": supplier_id,
             "supplier_name": fake.company_suffix()
             + " "
             + ingredient_info["dutch_translation"]
@@ -244,9 +243,9 @@ def generate_ingredient_supply_data(
     for single_date in pd.date_range(start=start_date, end=end_date):
         for ingredient, info in BASE_INGREDIENTS.items():
             # Randomly select a supplier for the ingredient
-            supplier_id = (
+            supplier_name = (
                 df_supplier_data[df_supplier_data["supplier_type"] == ingredient]
-                .sample()["supplier_id"]
+                .sample()["supplier_name"]
                 .values[0]
             )
 
@@ -277,7 +276,7 @@ def generate_ingredient_supply_data(
                     "date": single_date.strftime("%Y-%m-%d"),
                     "weekday": single_date.day_name(),
                     "ingredient": ingredient,
-                    "supplier_id": supplier_id,
+                    "supplier": supplier_name,
                     "initial_quantity": initial_quantity,
                     "quantity_supplied": quantity_supplied,
                     "quantity_used": quantity_used,
@@ -332,12 +331,8 @@ def generate_sales_transaction_data(
                 price = STROOPWAFEL_PRICE * discount_rate
 
                 random_time = fake.date_time_between_dates(
-                    datetime_start=datetime.now().replace(
-                        hour=10, minute=0, second=0
-                    ),
-                    datetime_end=datetime.now().replace(
-                        hour=18, minute=0, second=0
-                    ),
+                    datetime_start=datetime.now().replace(hour=10, minute=0, second=0),
+                    datetime_end=datetime.now().replace(hour=18, minute=0, second=0),
                 ).time()
                 transaction_info = {
                     "transaction_id": transaction_id,
@@ -370,9 +365,17 @@ def generate_employee_data(n):
         position = positions[i % 2]
 
         employee_info = {
-            "employee_id": i,
+            # "employee_id": i,
             "employee_name": fake.first_name(),
             "employee_contact": fake.phone_number(),
+            "employee_date_of_birth": fake.date_of_birth(
+                minimum_age=18, maximum_age=68
+            ),
+            # has been employed since between 1 month and 5 years ago
+            "employee_since": fake.date_between_dates(
+                datetime.now().date() - timedelta(days=365 * 5),
+                datetime.now().date() - timedelta(days=7),
+            ),
             "position": position,
         }
         employees.append(employee_info)
@@ -386,11 +389,11 @@ def generate_shift_data(start_date, end_date, employee_data):
     shift_hours = ["10:00-14:00", "14:00-18:00"]
 
     for single_date in pd.date_range(start=start_date, end=end_date):
-        for employee_id in employee_data["employee_id"].unique():
+        for employee_name in employee_data["employee_name"].unique():
             shift_info = {
                 "date": single_date.strftime("%Y-%m-%d"),
                 "weekday": single_date.day_name(),
-                "employee_id": employee_id,
+                "employee_name": employee_name,
                 "shift_hours": random.choice(shift_hours),
             }
             shift_data.append(shift_info)
@@ -493,7 +496,9 @@ df_ratings = generate_ratings_data(100, start_date, end_date, df_employee_data)
 
 # Outptut to Excel
 df_suppliers.to_excel("data/suppliers.xlsx", index=False)
-df_stroopwafel_product_ingredients.to_excel("data/stroopwafel_product_ingredients.xlsx", index=False)
+df_stroopwafel_product_ingredients.to_excel(
+    "data/stroopwafel_product_ingredients.xlsx", index=False
+)
 df_ingredient_supplies.to_excel("data/ingredient_supplies.xlsx", index=False)
 df_employee_data.to_excel("data/employee_data.xlsx", index=False)
 df_shift_data.to_excel("data/shift_data.xlsx", index=False)
