@@ -15,37 +15,153 @@ NUMBER_OF_RECORDS = 1000  # Number of records for each dataset
 NUMBER_OF_EMPLOYEES = 10
 
 STROOPWAFEL_PRICE = 3.00
+PRICE_MARKUP = 1.5
 
-INGREDIENTS = {
-    "Flour": {"Dutch": "Bloem", "Unit Cost": 0.50, "Per Stroopwafel": 30},
-    "Brown Sugar": {"Dutch": "Bruine Suiker", "Unit Cost": 0.75, "Per Stroopwafel": 15},
-    "Butter": {"Dutch": "Boter", "Unit Cost": 8.00, "Per Stroopwafel": 15},
-    "Eggs": {"Dutch": "Eieren", "Unit Cost": 0.20, "Per Stroopwafel": 0.1},
-    "Cinnamon": {"Dutch": "Kaneel", "Unit Cost": 10.00, "Per Stroopwafel": 1},
-    "Yeast": {"Dutch": "Gist", "Unit Cost": 1.00, "Per Stroopwafel": 1},
-    "Molasses": {"Dutch": "Melasse", "Unit Cost": 2.00, "Per Stroopwafel": 10},
-    "Salt": {"Dutch": "Zout", "Unit Cost": 0.50, "Per Stroopwafel": 0.5},
-    "Vanilla": {"Dutch": "Vanille", "Unit Cost": 15.00, "Per Stroopwafel": 0.5},
-    "Milk": {"Dutch": "Melk", "Unit Cost": 0.75, "Per Stroopwafel": 10},
-    "Honey": {"Dutch": "Honing", "Unit Cost": 5.00, "Per Stroopwafel": 5},
+import numpy as np
+
+BASE_INGREDIENTS = {
+    "Flour": {
+        "dutch_translation": "Bloem",
+        "unit_cost": 0.50,
+    },
+    "Brown Sugar": {"dutch_translation": "Bruine Suiker", "unit_cost": 0.75},
+    "Butter": {"dutch_translation": "Boter", "unit_cost": 8.00},
+    "Eggs": {"dutch_translation": "Eieren", "unit_cost": 0.20},
+    "Cinnamon": {"dutch_translation": "Kaneel", "unit_cost": 10.00},
+    "Yeast": {"dutch_translation": "Gist", "unit_cost": 1.00},
+    "Molasses": {"dutch_translation": "Melasse", "unit_cost": 2.00},
+    "Salt": {"dutch_translation": "Zout", "unit_cost": 0.50},
+    "Vanilla": {"dutch_translation": "Vanille", "unit_cost": 15.00},
+    "Milk": {"dutch_translation": "Melk", "unit_cost": 0.75},
+    "Honey": {"dutch_translation": "Honing", "unit_cost": 5.00},
 }
+
+STROOPWAFEL_PRODUCTS = [
+    {
+        "product_id": 0,
+        "name": "Classic Stroopwafel",
+        "ingredients": {
+            "Flour": 0.06,
+            "Brown Sugar": 0.05,
+            "Butter": 0.04,
+            "Eggs": 0.01,
+            "Yeast": 0.01,
+            "Molasses": 0.02,
+            "Cinnamon": 0.02,
+            "Salt": 0.01,
+            "Vanilla": 0.01,
+            "Milk": 0.03,
+            "Honey": 0.01,
+        },
+        "description": "The classic stroopwafel made with all the traditional ingredients.",
+    },
+    {
+        "product_id": 1,
+        "name": "Vanilla Stroopwafel",
+        "ingredients": {
+            "Flour": 0.06,
+            "Brown Sugar": 0.05,
+            "Butter": 0.04,
+            "Eggs": 0.01,
+            "Yeast": 0.01,
+            "Molasses": 0.02,
+            "Cinnamon": 0.01,
+            "Salt": 0.01,
+            "Vanilla": 0.03,
+            "Milk": 0.03,
+            "Honey": 0.01,
+        },
+        "description": "This stroopwafel would have a hint of vanilla flavor.",
+    },
+    {
+        "product_id": 2,
+        "name": "Honey Stroopwafel",
+        "ingredients": {
+            "Flour": 0.06,
+            "Brown Sugar": 0.04,
+            "Butter": 0.04,
+            "Eggs": 0.01,
+            "Yeast": 0.01,
+            "Molasses": 0.02,
+            "Cinnamon": 0.01,
+            "Salt": 0.01,
+            "Vanilla": 0.01,
+            "Milk": 0.03,
+            "Honey": 0.03,
+        },
+        "description": "A stroopwafel that uses honey both in the dough and in the filling, giving it a distinctive honey flavor.",
+    },
+]
+
+
+def generate_stroopwafel_types():
+    product_data = []
+    for product in STROOPWAFEL_PRODUCTS:
+        cost = 0
+        for ingredient, quantity in product["ingredients"].items():
+            cost += BASE_INGREDIENTS[ingredient]["unit_cost"] * quantity
+
+        product_info = {
+            "product_name": product["name"],
+            "unit_cost": cost,
+            "unit_price": cost
+            * PRICE_MARKUP,  # Given that all products are priced the same
+            "ingredients": product["ingredients"],
+        }
+        product_data.append(product_info)
+
+    return pd.DataFrame(product_data)
+
+
+def create_ingredients_data():
+    ingredient_data = []
+    for ingredient, ingredient_info in BASE_INGREDIENTS.items():
+        ingredient_info["ingredient_name"] = ingredient
+        ingredient_info["ingredient_dutch_name"] = ingredient_info["dutch_translation"]
+        ingredient_info["unit_cost"] = ingredient_info["unit_cost"]
+        ingredient_data.append(ingredient_info)
+
+    return pd.DataFrame(ingredient_data)
+
+
+def create_stroopwafel_product_ingredients():
+    product_ingredients = []
+
+    for product in STROOPWAFEL_PRODUCTS:
+        for ingredient, quantity in product["ingredients"].items():
+            product_ingredient = {
+                "product_name": product["name"],
+                "ingredient": ingredient,
+                "quantity": quantity,
+            }
+            product_ingredients.append(product_ingredient)
+
+    return pd.DataFrame(product_ingredients)
 
 
 def generate_stroopwafels_made(start_date, end_date) -> pd.DataFrame:
     made = []
-    for single_date in pd.date_range(start=start_date, end=end_date):
-        stroopwafels_sold = (
-            random.randint(MIN_SALES_WEEK_DAY, MAX_SALES_WEEK_DAY)
-            if single_date.day_name() not in ["Saturday", "Sunday"]
-            else random.randint(MIN_SALES_WEEKEND, MAX_SALES_WEEKEND)
-        )
+    product_ratios = {
+        "Classic Stroopwafel": 0.7,
+        "Vanilla Stroopwafel": 0.2,
+        "Honey Stroopwafel": 0.1,
+    }
 
-        supply_info = {
-            "date": single_date.strftime("%Y-%m-%d"),
-            "weekday": single_date.day_name(),
-            "made": stroopwafels_sold,
-        }
-        made.append(supply_info)
+    for single_date in pd.date_range(start=start_date, end=end_date):
+        for product, ratio in product_ratios.items():
+            stroopwafels_sold = (
+                random.randint(MIN_SALES_WEEK_DAY, MAX_SALES_WEEK_DAY)
+                if single_date.day_name() not in ["Saturday", "Sunday"]
+                else random.randint(MIN_SALES_WEEKEND, MAX_SALES_WEEKEND)
+            ) * ratio
+
+            supply_info = {
+                "date": single_date.strftime("%Y-%m-%d"),
+                "weekday": single_date.day_name(),
+                "made": stroopwafels_sold,
+                "product": product,
+            }
+            made.append(supply_info)
 
     return pd.DataFrame(made)
 
@@ -94,7 +210,7 @@ def generate_supplier_data() -> pd.DataFrame:
     suppliers = []
     supplier_id = 0
 
-    for ingredient, ingredient_info in INGREDIENTS.items():
+    for ingredient, ingredient_info in BASE_INGREDIENTS.items():
         num_suppliers = random.randint(1, 2)  # 1 or 2 suppliers for each ingredient
 
         for _ in range(num_suppliers):
@@ -102,7 +218,7 @@ def generate_supplier_data() -> pd.DataFrame:
                 "supplier_id": supplier_id,
                 "supplier_name": fake.company_suffix()
                 + " "
-                + ingredient_info["Dutch"]
+                + ingredient_info["dutch_translation"]
                 + " Leverancier",
                 "supplier_type": ingredient,  # Use the English ingredient as supplier type
                 "supplier_address": fake.address(),
@@ -121,10 +237,11 @@ def generate_ingredient_supply_data(
     end_date,
     df_stroopwafels_made: pd.DataFrame,
     df_supplier_data: pd.DataFrame,
+    df_stroopwafel_product_ingredients: pd.DataFrame,
 ):
     supplies = []
     for single_date in pd.date_range(start=start_date, end=end_date):
-        for ingredient, info in INGREDIENTS.items():
+        for ingredient, info in BASE_INGREDIENTS.items():
             # Randomly select a supplier for the ingredient
             supplier_id = (
                 df_supplier_data[df_supplier_data["supplier_type"] == ingredient]
@@ -133,34 +250,45 @@ def generate_ingredient_supply_data(
             )
 
             # Estimate usage based on made units
-            stroopwafels_made = df_stroopwafels_made[
-                df_stroopwafels_made["date"] == str(single_date.date())
-            ]["made"].values[0]
-            quantity_used = info["Per Stroopwafel"] * stroopwafels_made
+            for product in df_stroopwafels_made["product"].unique():
+                stroopwafels_made = df_stroopwafels_made[
+                    df_stroopwafels_made["date"] == str(single_date.date())
+                ]["made"].values[0]
 
-            # Add a buffer to the initial quantity and supplied quantity
-            initial_quantity = quantity_used + random.randint(100, 500)
-            quantity_supplied = quantity_used + random.randint(100, 500)
+                # Get the quantity of the ingredient used in the product
+                df_ingredients = df_stroopwafel_product_ingredients[df_stroopwafel_product_ingredients["product_name"] == product]
+                quantity = df_ingredients[df_ingredients["ingredient"] == ingredient][ "quantity" ].values[0]
+                quantity_used = quantity * stroopwafels_made
 
-            end_quantity = (
-                initial_quantity + quantity_supplied - quantity_used
-            )  # Calculate end quantity
+                # Add a buffer to the initial quantity and supplied quantity
+                initial_quantity = quantity_used + random.randint(100, 500)
+                quantity_supplied = quantity_used + random.randint(100, 500)
 
-            supply_info = {
-                "date": single_date.strftime("%Y-%m-%d"),
-                "weekday": single_date.day_name(),
-                "ingredient": ingredient,
-                "supplier_id": supplier_id,
-                "initial_quantity": initial_quantity,
-                "quantity_supplied": quantity_supplied,
-                "quantity_used": quantity_used,
-                "end_quantity": end_quantity,
-                "unit_cost": info["Unit Cost"],
-            }
-            supplies.append(supply_info)
+                end_quantity = (
+                    initial_quantity + quantity_supplied - quantity_used
+                )  # Calculate end quantity
+
+                supply_info = {
+                    "date": single_date.strftime("%Y-%m-%d"),
+                    "weekday": single_date.day_name(),
+                    "ingredient": ingredient,
+                    "supplier_id": supplier_id,
+                    "initial_quantity": initial_quantity,
+                    "quantity_supplied": quantity_supplied,
+                    "quantity_used": quantity_used,
+                    "end_quantity": end_quantity,
+                    "unit_cost": info["unit_cost"],
+                }
+                supplies.append(supply_info)
 
     # Convert the list of dictionaries to a DataFrame
     df_supplies = pd.DataFrame(supplies)
+
+    df_supplies["quantity_supplied"] = df_supplies["quantity_supplied"].apply(np.ceil)
+    df_supplies["quantity_used"] = df_supplies["quantity_supplied"].apply(np.ceil)
+    df_supplies["initial_quantity"] = df_supplies["quantity_supplied"].apply(np.floor)
+    df_supplies["end_quantity"] = df_supplies["quantity_supplied"].apply(np.floor)
+
     return df_supplies
 
 
@@ -198,7 +326,7 @@ def generate_sales_transaction_data(
                 "time": fake.time(),  # Random time
                 "weekday": single_date.day_name(),
                 "quantity_sold": quantity_sold,
-                "unit_price": price, 
+                "unit_price": price,
                 "total_price": quantity_sold * price,
             }
             transaction_data.append(transaction_info)
@@ -208,9 +336,8 @@ def generate_sales_transaction_data(
     # Convert the list of dictionaries to a DataFrame
     df_transactions = pd.DataFrame(transaction_data)
 
-    df_transactions['total_price'] = df_transactions['total_price'].round(2)
-    df_transactions['unit_price'] = df_transactions['unit_price'].round(2)
-
+    df_transactions["total_price"] = df_transactions["total_price"].round(2)
+    df_transactions["unit_price"] = df_transactions["unit_price"].round(2)
 
     return df_transactions
 
@@ -308,9 +435,14 @@ def generate_ratings_data(n, start_date, end_date, employee_data):
     return df_ratings
 
 
+# -----------------------------------------------------------------------------------------------------------------------------
+
+df_stroopwafel_types = generate_stroopwafel_types()
+
 # Get supplier data first
 df_suppliers = generate_supplier_data()
 
+df_stroopwafel_product_ingredients = create_stroopwafel_product_ingredients()
 
 # Generate ingredient supply data for June 2023
 start_date = datetime(2023, 6, 1)
@@ -322,7 +454,11 @@ df_promos = generate_promotions_data(5, start_date, end_date)
 df_stroopwafels_made = generate_stroopwafels_made(start_date, end_date)
 
 df_ingredient_supplies = generate_ingredient_supply_data(
-    start_date, end_date, df_stroopwafels_made, df_suppliers
+    start_date,
+    end_date,
+    df_stroopwafels_made,
+    df_suppliers,
+    df_stroopwafel_product_ingredients,
 )
 
 df_sales_transaction_data = generate_sales_transaction_data(
