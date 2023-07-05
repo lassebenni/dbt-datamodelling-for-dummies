@@ -3,7 +3,9 @@ import random
 import pandas as pd
 from datetime import datetime, timedelta
 
-fake = Faker("nl_NL")  # Use Dutch locale
+from scripts.transform_data import update_data_for_analysis
+
+fake: Faker = Faker("nl_NL")  # Use Dutch locale
 
 MIN_SALES_WEEK_DAY = 300
 MAX_SALES_WEEK_DAY = 1000
@@ -12,7 +14,8 @@ MAX_SALES_WEEKEND = 2000
 
 NUMBER_OF_RECORDS = 1000  # Number of records for each dataset
 
-NUMBER_OF_EMPLOYEES = 20
+NUMBER_OF_EMPLOYEES = 10
+NUMBER_OF_REVIEWS = 100
 
 STROOPWAFEL_PRICE = 3.00
 PRICE_MARKUP = 1.5
@@ -240,6 +243,8 @@ def generate_ingredient_supply_data(
     df_stroopwafel_product_ingredients: pd.DataFrame,
 ):
     supplies = []
+    df_supplies = pd.DataFrame()  # Initialize the supplies dataframe
+
     for single_date in pd.date_range(start=start_date, end=end_date):
         for ingredient, info in BASE_INGREDIENTS.items():
             # Randomly select a supplier for the ingredient
@@ -250,6 +255,7 @@ def generate_ingredient_supply_data(
             )
 
             # Estimate usage based on made units
+            total_quantity_used = 0
             for product in df_stroopwafels_made["product"].unique():
                 stroopwafels_made = df_stroopwafels_made[
                     df_stroopwafels_made["date"] == str(single_date.date())
@@ -262,28 +268,41 @@ def generate_ingredient_supply_data(
                 quantity = df_ingredients[df_ingredients["ingredient"] == ingredient][
                     "quantity"
                 ].values[0]
+
                 quantity_used = quantity * stroopwafels_made
 
-                # Add a buffer to the initial quantity and supplied quantity
-                initial_quantity = quantity_used + random.randint(100, 500)
-                quantity_supplied = quantity_used + random.randint(100, 500)
+                total_quantity_used += quantity_used
 
-                end_quantity = (
-                    initial_quantity + quantity_supplied - quantity_used
-                )  # Calculate end quantity
+            # Get the initial quantity and supplied quantity
+            if df_supplies.empty:
+                initial_quantity = (
+                    total_quantity_used * 1.1
+                )  # for the first day, we use total_quantity_used and add a 10 % buffer
+                quantity_supplied = (
+                    total_quantity_used * 1.1
+                )  # for the first day, we use total_quantity_used and add a 10 % buffer
+            else:
+                initial_quantity = df_supplies.iloc[-1]["end_quantity"]
+                quantity_supplied = (
+                    initial_quantity - df_supplies.iloc[-1]["quantity_used"]
+                ) * np.random.random.uniform(0.8, 1.2)
 
-                supply_info = {
-                    "date": single_date.strftime("%Y-%m-%d"),
-                    "weekday": single_date.day_name(),
-                    "ingredient": ingredient,
-                    "supplier": supplier_name,
-                    "initial_quantity": initial_quantity,
-                    "quantity_supplied": quantity_supplied,
-                    "quantity_used": quantity_used,
-                    "end_quantity": end_quantity,
-                    "unit_cost": info["unit_cost"],
-                }
-                supplies.append(supply_info)
+            end_quantity = (
+                initial_quantity + quantity_supplied - total_quantity_used
+            )  # Calculate end quantity
+
+            supply_info = {
+                "date": single_date.strftime("%Y-%m-%d"),
+                "weekday": single_date.day_name(),
+                "ingredient": ingredient,
+                "supplier": supplier_name,
+                "initial_quantity": initial_quantity,
+                "quantity_supplied": quantity_supplied,
+                "quantity_used": total_quantity_used,
+                "end_quantity": end_quantity,
+                "unit_cost": info["unit_cost"],
+            }
+            supplies.append(supply_info)
 
     # Convert the list of dictionaries to a DataFrame
     df_supplies = pd.DataFrame(supplies)
@@ -296,8 +315,112 @@ def generate_ingredient_supply_data(
     return df_supplies
 
 
-def generate_sales_transaction_data(
-    start_date, end_date, df_stroopwafels_made, df_promotions
+def generate_employee_data(n):
+    employees = []
+    positions = ["Cashier", "Baker"]
+    base_date = datetime.now().date() - timedelta(days=365 * 1)
+
+    for i in range(n):
+        position = positions[i % 2]
+        days_to_add = i * 30  # Approximately one month between each employee
+        employee_since = base_date + timedelta(days=days_to_add)
+
+        if (
+            i == n - 1
+        ):  # If it's the last employee, make them 18 years old and a cashier
+            dob = datetime.now().date() - timedelta(days=365 * 18)
+            position = "Cashier"
+            employee_since = datetime.now().date() - timedelta(days=30)
+        else:
+            dob = fake.date_of_birth(minimum_age=18, maximum_age=68)
+
+        employee_info = {
+            "employee_id": i,
+            "employee_name": fake.first_name(),
+            "employee_last_name": fake.last_name(),
+            "employee_contact": fake.email(),
+            "employee_date_of_birth": dob,
+            "employee_since": employee_since,
+            "position": position,
+        }
+        employees.append(employee_info)
+
+    df_employees = pd.DataFrame(employees)
+    return df_employees
+
+
+def generate_shift_data(start_date, end_date, employee_data):
+    shift_data = []
+    shift_hours = ["10:00-14:00", "14:00-18:00"]
+    unique_bakers = employee_data.loc[
+        employee_data["position"] == "Baker", "employee_name"
+    ].unique()
+    unique_cashiers = employee_data.loc[
+        employee_data["position"] == "Cashier", "employee_name"
+    ].unique()
+    last_employee_id = employee_data["employee_id"].max()
+    last_employee_name = employee_data.loc[
+        employee_data["employee_id"] == last_employee_id, "employee_name"
+    ].values[0]
+
+    # Remove the last employee name from the unique cashiers list
+    unique_cashiers = list(filter(lambda a: a != last_employee_name, unique_cashiers))
+
+    for i, single_date in enumerate(pd.date_range(start=start_date, end=end_date)):
+        for j in range(2):  # only two shifts per day
+            # Determine the employee names based on the day and shift
+            if single_date.day_name() == "Sunday" and shift_hours[j] == "14:00-18:00" and single_date.date() > (datetime.now().date() - timedelta(days=21)):
+                cashier_name = last_employee_name
+                baker_name = unique_bakers[
+                    (i + j) % len(unique_bakers)
+                ]  # Select the baker from the unique list
+            else:
+                cashier_name = unique_cashiers[
+                    (i + j) % len(unique_cashiers)
+                ]  # Select the cashier from the unique list
+                baker_name = unique_bakers[
+                    (i + j) % len(unique_bakers)
+                ]  # Select the baker from the unique list
+
+            # Create the shift info for the baker and cashier
+            for employee_name in [baker_name, cashier_name]:
+                shift_info = {
+                    "date": single_date.strftime("%Y-%m-%d"),
+                    "weekday": single_date.day_name(),
+                    "position": employee_data[employee_data["employee_name"] == employee_name]["position"].values[0],
+                    "employee_name": employee_name,
+                    "employee_id": employee_data[
+                        employee_data["employee_name"] == employee_name
+                    ]["employee_id"].values[0],
+                    "shift_hours": shift_hours[j],
+                }
+                shift_data.append(shift_info)
+
+    df_shifts = pd.DataFrame(shift_data)
+    return df_shifts
+
+
+# Sales
+def get_employee_on_shift(df_shifts, transaction_date, transaction_time):
+    # Make sure transaction_time is a datetime object, not a string
+    if isinstance(transaction_time, str):
+        transaction_time = datetime.strptime(transaction_time, "%H:%M").time()
+
+    shifts_on_day = df_shifts[df_shifts["date"] == transaction_date]
+    for _, shift in shifts_on_day.iterrows():
+        shift_start, shift_end = [
+            datetime.strptime(time, "%H:%M") for time in shift["shift_hours"].split("-")
+        ]
+        if (
+            shift_start.time() <= transaction_time <= shift_end.time()
+            and shift["position"] == "Cashier"
+        ):
+            return shift["employee_id"]
+    return None  # No employee found on shift
+
+
+def generate_sales(
+    start_date, end_date, df_stroopwafels_made, df_promotions, df_shifts
 ):
     transaction_data = []
     transaction_id = 0
@@ -334,78 +457,38 @@ def generate_sales_transaction_data(
                     datetime_start=datetime.now().replace(hour=10, minute=0, second=0),
                     datetime_end=datetime.now().replace(hour=18, minute=0, second=0),
                 ).time()
-                transaction_info = {
-                    "transaction_id": transaction_id,
-                    "date": single_date.strftime("%Y-%m-%d"),
-                    "time": random_time,  # Random time
-                    "weekday": single_date.day_name(),
-                    "product": product,
-                    "quantity_sold": quantity_sold,
-                    "unit_price": price,
-                    "total_price": quantity_sold * price,
-                }
-                transaction_data.append(transaction_info)
+                employee_id = get_employee_on_shift(
+                    df_shifts, single_date.strftime("%Y-%m-%d"), random_time
+                )
+                if (
+                    employee_id is not None
+                ):  # Only proceed if there's a cashier on shift
+                    transaction_info = {
+                        "transaction_id": transaction_id,
+                        "date": single_date.strftime("%Y-%m-%d"),
+                        "time": random_time,  # Random time
+                        "weekday": single_date.day_name(),
+                        "employee_id": employee_id,
+                        "product": product,
+                        "quantity_sold": quantity_sold,
+                        "unit_price": price,
+                        "total_price": quantity_sold * price,
+                    }
+                    transaction_data.append(transaction_info)
 
-                transaction_id += 1
+                    transaction_id += 1
 
     # Convert the list of dictionaries to a DataFrame
-    df_transactions = pd.DataFrame(transaction_data)
+    df_sales = pd.DataFrame(transaction_data)
 
-    df_transactions["total_price"] = df_transactions["total_price"].round(2)
-    df_transactions["unit_price"] = df_transactions["unit_price"].round(2)
+    df_sales["total_price"] = df_sales["total_price"].round(2)
+    df_sales["unit_price"] = df_sales["unit_price"].round(2)
 
-    return df_transactions
-
-
-def generate_employee_data(n):
-    employees = []
-    positions = ["Cashier", "Baker"]
-
-    for i in range(n):
-        position = positions[i % 2]
-
-        employee_info = {
-            # "employee_id": i,
-            "employee_name": fake.first_name(),
-            "employee_contact": fake.phone_number(),
-            "employee_date_of_birth": fake.date_of_birth(
-                minimum_age=18, maximum_age=68
-            ),
-            # has been employed since between 1 month and 5 years ago
-            "employee_since": fake.date_between_dates(
-                datetime.now().date() - timedelta(days=365 * 5),
-                datetime.now().date() - timedelta(days=7),
-            ),
-            "position": position,
-        }
-        employees.append(employee_info)
-
-    df_employees = pd.DataFrame(employees)
-    return df_employees
-
-
-def generate_shift_data(start_date, end_date, employee_data):
-    shift_data = []
-    shift_hours = ["10:00-14:00", "14:00-18:00"]
-
-    for single_date in pd.date_range(start=start_date, end=end_date):
-        for employee_name in employee_data["employee_name"].unique():
-            shift_info = {
-                "date": single_date.strftime("%Y-%m-%d"),
-                "weekday": single_date.day_name(),
-                "employee_name": employee_name,
-                "shift_hours": random.choice(shift_hours),
-            }
-            shift_data.append(shift_info)
-
-    df_shifts = pd.DataFrame(shift_data)
-    return df_shifts
+    return df_sales
 
 
 # Reviews
-
-
-def generate_ratings_data(n, start_date, end_date, employee_data):
+def generate_reviews(n, start_date, end_date, employee_data):
     ratings = []
     positive_descriptions = [
         "Great service",
@@ -422,11 +505,10 @@ def generate_ratings_data(n, start_date, end_date, employee_data):
         "Not what I expected",
     ]
     special_terms = [
-        "stroopwafel",
-        "delicious",
-        "Amsterdam",
-        "lovely",
-        "the Dam",
+        "#Holland",
+        "#delicious",
+        "#Amsterdam",
+        "#DamSquare",
         "#stroopwafel",
     ]
 
@@ -436,20 +518,25 @@ def generate_ratings_data(n, start_date, end_date, employee_data):
         )  # True for positive sentiment, False for negative sentiment
         if sentiment:
             description = random.choice(positive_descriptions)
+            rating = random.randint(4, 5)
+            description += ". " + random.choice(special_terms)
+            description += ". " + random.choice(
+                [
+                    "Special thanks to "
+                    + random.choice(employee_data["employee_name"]),
+                    "",
+                ]
+            )
         else:
             description = random.choice(negative_descriptions)
-
-        description += ". " + random.choice(special_terms)
-        description += ". " + random.choice(
-            ["Special thanks to " + random.choice(employee_data["employee_name"]), ""]
-        )
+            rating = random.randint(1, 3)
 
         rating_info = {
             "rating_id": i,
             "date": fake.date_between(
                 start_date=start_date, end_date=end_date
             ).strftime("%Y-%m-%d"),
-            "star_rating": random.randint(1, 5),
+            "stars": rating,
             "description": description,
         }
         ratings.append(rating_info)
@@ -460,59 +547,76 @@ def generate_ratings_data(n, start_date, end_date, employee_data):
 
 # -----------------------------------------------------------------------------------------------------------------------------
 
-df_stroopwafel_types = generate_stroopwafel_types()
+if __name__ == "__main__":
+    df_stroopwafel_types = generate_stroopwafel_types()
 
-# Get supplier data first
-df_suppliers = generate_supplier_data()
+    # Get supplier data first
+    df_suppliers = generate_supplier_data()
 
-df_stroopwafel_product_ingredients = create_stroopwafel_product_ingredients()
+    df_stroopwafel_product_ingredients = create_stroopwafel_product_ingredients()
 
-# Generate ingredient supply data for June 2023
-start_date = datetime(2023, 6, 1)
-end_date = datetime(2023, 6, 30)
+    # Generate ingredient supply data for June 2023
+    start_date = datetime(2023, 6, 1)
+    end_date = datetime(2023, 6, 30)
 
-# Generate some promos
-df_promos = generate_promotions_data(5, start_date, end_date)
+    # Generate some promos
+    df_promotions = generate_promotions_data(5, start_date, end_date)
 
-df_stroopwafels_made = generate_stroopwafels_made(start_date, end_date)
+    df_stroopwafels_made = generate_stroopwafels_made(start_date, end_date)
 
-df_ingredient_supplies = generate_ingredient_supply_data(
-    start_date,
-    end_date,
-    df_stroopwafels_made,
-    df_suppliers,
-    df_stroopwafel_product_ingredients,
-)
+    # supplies
+    df_supplies = generate_ingredient_supply_data(
+        start_date,
+        end_date,
+        df_stroopwafels_made,
+        df_suppliers,
+        df_stroopwafel_product_ingredients,
+    )
 
-df_sales_transaction_data = generate_sales_transaction_data(
-    start_date, end_date, df_stroopwafels_made, df_promos
-)
+    # employees
+    df_employees = generate_employee_data(NUMBER_OF_EMPLOYEES)
+    df_shifts = generate_shift_data(start_date, end_date, df_employees)
 
-df_employee_data = generate_employee_data(10)
-df_shift_data = generate_shift_data(start_date, end_date, df_employee_data)
+    # sales transactions
+    df_sales = generate_sales(
+        start_date, end_date, df_stroopwafels_made, df_promotions, df_shifts
+    )
 
-df_ratings = generate_ratings_data(100, start_date, end_date, df_employee_data)
+    df_ratings = generate_reviews(
+        NUMBER_OF_REVIEWS, start_date, end_date, df_employees
+    )
 
-DATA_PATH = "data"
+    # Transformations for analysis
+    res = update_data_for_analysis(
+        df_employees, df_shifts, df_sales, df_supplies, df_ratings
+    )
+    df_sales = res["sales"]
+    df_supplies = res["supplies"]
+    df_ratings = res["ratings"]
+    df_shifts = res["shifts"]
 
-# Outptut to Excel
-df_suppliers.to_excel(f"{DATA_PATH}/suppliers.xlsx", index=False)
-df_stroopwafel_product_ingredients.to_excel(
-    f"{DATA_PATH}/stroopwafel_product_ingredients.xlsx", index=False
-)
-df_ingredient_supplies.to_excel(f"{DATA_PATH}/ingredient_supplies.xlsx", index=False)
-df_employee_data.to_excel(f"{DATA_PATH}/employee_data.xlsx", index=False)
-df_shift_data.to_excel(f"{DATA_PATH}/shift_data.xlsx", index=False)
+    DATA_PATH = "data"
 
-# Output to CSV
-df_sales_transaction_data.to_csv(f"{DATA_PATH}/sales_transaction_data.csv", index=False)
-df_suppliers.to_csv(f"{DATA_PATH}/suppliers.csv", index=False)
-df_stroopwafel_product_ingredients.to_csv(
-    f"{DATA_PATH}/stroopwafel_product_ingredients.csv", index=False
-)
-df_ingredient_supplies.to_csv(f"{DATA_PATH}/ingredient_supplies.csv", index=False)
-df_employee_data.to_csv(f"{DATA_PATH}/employee_data.csv", index=False)
-df_shift_data.to_csv(f"{DATA_PATH}/shift_data.csv", index=False)
+    # # Outptut to Excel
+    # df_suppliers.to_excel(f"{DATA_PATH}/suppliers.xlsx", index=False)
+    # df_stroopwafel_product_ingredients.to_excel(
+    #     f"{DATA_PATH}/stroopwafel_product_ingredients.xlsx", index=False
+    # )
+    # df_ingredient_supplies.to_excel(f"{DATA_PATH}/ingredient_supplies.xlsx", index=False)
+    # df_employee_data.to_excel(f"{DATA_PATH}/employee_data.xlsx", index=False)
+    # df_shift_data.to_excel(f"{DATA_PATH}/shift_data.xlsx", index=False)
 
-# Output to JSON
-df_ratings.to_json(f"{DATA_PATH}/ratings.json", orient="records", lines=True)
+    # # Output to CSV
+    df_stroopwafel_types.to_csv(f"{DATA_PATH}/types.csv", index=False)
+    df_sales.to_csv(f"{DATA_PATH}/sales.csv", index=False)
+    df_suppliers.to_csv(f"{DATA_PATH}/suppliers.csv", index=False)
+    df_stroopwafel_product_ingredients.to_csv(
+        f"{DATA_PATH}/ingredients.csv", index=False
+    )
+    df_supplies.to_csv(f"{DATA_PATH}/supplies.csv", index=False)
+    df_employees.to_csv(f"{DATA_PATH}/employees.csv", index=False)
+    df_shifts.to_csv(f"{DATA_PATH}/shifts.csv", index=False)
+    df_promotions.to_csv(f"{DATA_PATH}/promotions.csv", index=False)
+
+    # # Output to JSON
+    df_ratings.to_json(f"{DATA_PATH}/reviews.json", orient="records", lines=True)
