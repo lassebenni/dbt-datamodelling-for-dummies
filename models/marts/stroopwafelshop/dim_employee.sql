@@ -1,0 +1,1 @@
+with stg_employee as {{ ref()}}
