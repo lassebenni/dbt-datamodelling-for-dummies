@@ -5,6 +5,15 @@ with stg_sales as (
 
 ),
 
+dim_employee as (
+
+    select
+        employee_id,
+        employee_name
+    from {{ ref('dim_employee') }}
+
+),
+
 joined as  (
     select
         stg_sales.sale_id,
@@ -16,15 +25,11 @@ joined as  (
         stg_sales.unit_price,
         stg_sales.total_price,
 
-        dim_products.product_id,
-        dim_products.product_name,
-
         dim_employee.employee_name
 
     from stg_sales
-    left join dim_product on stg_sales.product = dim_product.product
     left join dim_employee on stg_sales.employee_id = dim_employee.employee_id
-)
+),
 
 final as (
 
@@ -37,9 +42,6 @@ final as (
         quantity_sold,
         unit_price,
         total_price
-
-        product_id,
-        product_name,
 
     from stg_sales
 
