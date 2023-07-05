@@ -11,3 +11,4 @@ bq load --replace --autodetect --source_format=CSV stroopwafelshop.shifts data/s
 bq load --replace --autodetect --source_format=CSV stroopwafelshop.suppliers data/suppliers.csv
 bq load --replace --autodetect --source_format=CSV stroopwafelshop.supplies data/supplies.csv
 bq load --replace --autodetect --source_format=CSV stroopwafelshop.types data/types.csv
+bq load --replace --autodetect --source_format=CSV stroopwafelshop.employees data/employees.csv
