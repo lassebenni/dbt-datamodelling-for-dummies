@@ -17,9 +17,11 @@ joined as (
     select
         date,
         weekday,
-        position,
-        employee_id,
-        shift_hours
+        shift_hours,
+
+        dim_employee.employee_id,
+        dim_employee.employee_name,
+        dim_employee.position
 
     from stg_shifts
     left join dim_employee

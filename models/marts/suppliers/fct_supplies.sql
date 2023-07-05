@@ -26,7 +26,7 @@ final as (
         unit_cost
 
     from stg_supplies
-    left join dim_suppliers on stg_supplies.supplier = dim_supplier.supplier_name
+    left join dim_supplier on stg_supplies.supplier = dim_supplier.supplier_name
 
 )
 

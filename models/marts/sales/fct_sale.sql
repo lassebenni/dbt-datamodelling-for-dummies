@@ -14,7 +14,7 @@ joined as  (
         stg_sales.employee_id,
         stg_sales.quantity_sold,
         stg_sales.unit_price,
-        stg_sales.total_price
+        stg_sales.total_price,
 
         dim_products.product_id,
         dim_products.product_name,
