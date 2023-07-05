@@ -19,4 +19,5 @@ sources:
         description: ""
       - name: types
         description: ""
-    database:
+      - name: employees
+        description: ""
