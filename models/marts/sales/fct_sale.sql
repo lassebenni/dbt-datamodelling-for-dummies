@@ -5,7 +5,7 @@ with stg_sales as (
 
 ),
 
-products as  (
+joined as  (
     select
         stg_sales.sale_id,
         stg_sales.sale_date,
@@ -19,8 +19,11 @@ products as  (
         dim_products.product_id,
         dim_products.product_name,
 
+        dim_employee.employee_name
+
     from stg_sales
     left join dim_product on stg_sales.product = dim_product.product
+    left join dim_employee on stg_sales.employee_id = dim_employee.employee_id
 )
 
 final as (
@@ -42,4 +45,4 @@ final as (
 
 )
 
-select * from final
+select * from joined
