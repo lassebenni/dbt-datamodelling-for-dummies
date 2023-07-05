@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: supplies
+    description: ""
+    columns:
+      - name: date
+      - name: weekday
+      - name: ingredient
+      - name: supplier
+      - name: initial_quantity
+      - name: quantity_supplied
+      - name: quantity_used
+      - name: end_quantity
+      - name: unit_cost

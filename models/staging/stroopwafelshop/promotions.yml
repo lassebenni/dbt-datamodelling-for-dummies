@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: promotions
+    description: ""
+    columns:
+      - name: promotion_name
+      - name: start_date
+      - name: end_date
+      - name: description
+      - name: discount_rate
+      - name: is_holiday

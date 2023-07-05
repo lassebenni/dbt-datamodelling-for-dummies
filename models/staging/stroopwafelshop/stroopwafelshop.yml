@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: stroopwafelshop
+    tables:
+      - name: ingredients
+        description: ""
+      - name: promotions
+        description: ""
+      - name: reviews
+        description: ""
+      - name: sales
+        description: ""
+      - name: shifts
+        description: ""
+      - name: suppliers
+        description: ""
+      - name: supplies
+        description: ""
+      - name: types
+        description: ""
+    database:

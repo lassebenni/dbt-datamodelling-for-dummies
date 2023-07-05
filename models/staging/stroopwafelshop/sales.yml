@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: sales
+    description: ""
+    columns:
+      - name: transaction_id
+      - name: date
+      - name: time
+      - name: weekday
+      - name: employee_id
+      - name: product
+      - name: quantity_sold
+      - name: unit_price
+      - name: total_price

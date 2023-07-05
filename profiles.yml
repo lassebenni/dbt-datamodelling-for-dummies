@@ -1,4 +1,4 @@
-makelaarsland:
+stroopwafelshop:
   target: dev
   outputs:
     dev:

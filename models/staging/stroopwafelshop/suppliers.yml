@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: suppliers
+    description: ""
+    columns:
+      - name: string_field_0
+      - name: string_field_1
+      - name: string_field_2
+      - name: string_field_3

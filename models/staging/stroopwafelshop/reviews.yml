@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: reviews
+    description: ""
+    columns:
+      - name: description
+      - name: stars
+      - name: date
+      - name: rating_id

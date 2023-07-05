@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: ingredients
+    description: ""
+    columns:
+      - name: product_name
+      - name: ingredient
+      - name: quantity

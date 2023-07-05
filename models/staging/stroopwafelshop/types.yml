@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: types
+    description: ""
+    columns:
+      - name: product_name
+      - name: unit_cost
+      - name: unit_price
+      - name: ingredients
