@@ -4,8 +4,8 @@ makelaarsland:
     dev:
       type: bigquery
       method: oauth
-      project: lassebenninga
-      dataset: airbyte_makelaarsland
+      project: xd-analytics-engineers
+      dataset: stroopwafelshop
       threads: 3
       timeout_seconds: 300
       location: EU
