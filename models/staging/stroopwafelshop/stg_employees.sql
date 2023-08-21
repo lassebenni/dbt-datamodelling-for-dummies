@@ -8,7 +8,7 @@ with raw_source as (
 final as (
 
     select
-        cast(employee_id as int64) as employee_id,
+        {{ dbt_utils.generate_surrogate_key(['employee_id']) }} as employee_sk,
         cast(employee_name as string) as employee_name,
         cast(employee_last_name as string) as employee_last_name,
         cast(employee_contact as string) as employee_contact,

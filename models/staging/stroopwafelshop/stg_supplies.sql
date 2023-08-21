@@ -8,6 +8,7 @@ with raw_source as (
 final as (
 
     select
+        {{ dbt_utils.generate_surrogate_key(['ingredient']) }} as supplies_sk,
         cast(date as date) as date,
         cast(weekday as string) as weekday,
         cast(ingredient as string) as ingredient,

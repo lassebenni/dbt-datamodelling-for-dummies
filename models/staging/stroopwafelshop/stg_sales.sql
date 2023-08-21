@@ -8,7 +8,7 @@ with raw_source as (
 final as (
 
     select
-        cast(transaction_id as int64) as sale_id,
+        {{ dbt_utils.generate_surrogate_key(['transaction_id']) }} as sales_sk,
         cast(date as date) as sale_date,
         cast(time as time) as sale_time,
         cast(weekday as string) as sale_weekday,

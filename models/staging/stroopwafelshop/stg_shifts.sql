@@ -8,6 +8,7 @@ with raw_source as (
 final as (
 
     select
+        {{ dbt_utils.generate_surrogate_key(['weekday', 'shift_hours']) }} as shift_sk,
         cast(date as date) as date,
         cast(weekday as string) as weekday,
         cast(position as string) as position,
