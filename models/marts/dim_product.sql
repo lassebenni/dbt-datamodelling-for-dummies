@@ -8,10 +8,10 @@ with stg_products as (
 final as (
 
     select
+        product_sk,
         product_name,
         unit_cost,
-        unit_price,
-        ingredients
+        unit_price
 
     from stg_products
 

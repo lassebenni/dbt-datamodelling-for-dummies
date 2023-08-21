@@ -8,7 +8,7 @@ with stg_reviews as (
 final as (
 
     select
-        review_id,
+        {{ dbt_utils.generate_surrogate_key(['review_id']) }} as review_sk,
         description,
         stars,
         date,

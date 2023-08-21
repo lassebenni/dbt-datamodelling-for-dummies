@@ -8,7 +8,7 @@ with stg_employee as (
 final as (
 
     select
-        employee_id,
+        employee_sk,
         employee_name,
         employee_last_name,
         employee_contact,

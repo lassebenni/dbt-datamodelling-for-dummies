@@ -5,29 +5,22 @@ with stg_supplies as (
 
 ),
 
-dim_supplier as (
-
-    select *
-    from {{ ref('dim_supplier') }}
-
-),
-
 final as (
 
     select
+        supplies_sk,
         date,
         weekday,
-        ingredient,
-        supplier,
         initial_quantity,
         quantity_supplied,
         quantity_used,
         end_quantity,
-        unit_cost
+        unit_cost,
+
+        {{ dbt_utils.generate_surrogate_key(['supplier']) }} as supplier_sk,
+        {{ dbt_utils.generate_surrogate_key(['ingredient']) }} as ingredient_sk
 
     from stg_supplies
-    left join dim_supplier on stg_supplies.supplier = dim_supplier.supplier_name
-
 )
 
 select * from final

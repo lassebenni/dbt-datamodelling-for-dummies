@@ -8,9 +8,11 @@ with stg_ingredients as (
 final as (
 
     select
-        product_name,
+        ingredient_sk,
         ingredient,
-        quantity
+        quantity,
+
+    {{ dbt_utils.generate_surrogate_key(['product_name']) }} as product_sk
 
     from stg_ingredients
 

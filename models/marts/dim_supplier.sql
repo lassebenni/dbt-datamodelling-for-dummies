@@ -8,6 +8,7 @@ with stg_suppliers as (
 final as (
 
     select
+    supplier_sk,
     supplier_name,
     supplier_type,
     supplier_contact,
