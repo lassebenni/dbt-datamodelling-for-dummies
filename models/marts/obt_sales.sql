@@ -2,7 +2,7 @@ select
     {{ dbt_utils.star(from=ref('fct_sales'), relation_alias='sale', except=[
         "sales_sk", "employee_sk", "product_sk"
     ]) }},
-    {{ dbt_utils.star(from=ref('dim_product'), relation_alias='product', except=[
+    {{ dbt_utils.star(from=ref('dim_product'), relation_alias='product', prefix='product_', except=[
         "product_sk"
     ]) }},
     {{ dbt_utils.star(from=ref('dim_employee'), relation_alias='employee', except=[
