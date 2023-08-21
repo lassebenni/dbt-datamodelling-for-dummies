@@ -8,6 +8,7 @@ with raw_source as (
 final as (
 
     select
+        FARM_FINGERPRINT(product_name) as product_id,
         cast(product_name as string) as product_name,
         cast(unit_cost as float64) as unit_cost,
         cast(unit_price as float64) as unit_price,

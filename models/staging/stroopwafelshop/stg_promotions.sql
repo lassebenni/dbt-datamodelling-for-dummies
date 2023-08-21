@@ -8,7 +8,7 @@ with raw_source as (
 final as (
 
     select
-        cast(promotion_name as string) as promotion_name,
+        cast(promotion_name as string) as name,
         cast(start_date as date) as start_date,
         cast(end_date as date) as end_date,
         cast(description as string) as description,

@@ -8,10 +8,10 @@ with raw_source as (
 final as (
 
     select
-        cast(transaction_id as int64) as transaction_id,
-        cast(date as date) as date,
-        cast(time as time) as time,
-        cast(weekday as string) as weekday,
+        cast(transaction_id as int64) as sale_id,
+        cast(date as date) as sale_date,
+        cast(time as time) as sale_time,
+        cast(weekday as string) as sale_weekday,
         cast(employee_id as int64) as employee_id,
         cast(product as string) as product,
         cast(quantity_sold as float64) as quantity_sold,

@@ -8,10 +8,10 @@ with raw_source as (
 final as (
 
     select
-        cast(string_field_0 as string) as string_field_0,
-        cast(string_field_1 as string) as string_field_1,
-        cast(string_field_2 as string) as string_field_2,
-        cast(string_field_3 as string) as string_field_3
+        cast(string_field_0 as string) as supplier_name,
+        cast(string_field_1 as string) as supplier_type,
+        cast(string_field_2 as string) as supplier_address,
+        cast(string_field_3 as string) as supplier_contact
 
     from raw_source
 
