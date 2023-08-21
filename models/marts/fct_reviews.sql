@@ -11,8 +11,8 @@ final as (
         {{ dbt_utils.generate_surrogate_key(['review_id']) }} as review_sk,
         description,
         stars,
+        date,
 
-        {{ dbt_utils.generate_surrogate_key(['date']) }} as date_sk
 
     from stg_reviews
 
