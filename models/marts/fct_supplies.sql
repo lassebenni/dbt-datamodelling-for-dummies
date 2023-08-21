@@ -9,14 +9,13 @@ final as (
 
     select
         supplies_sk,
-        date,
-        weekday,
         initial_quantity,
         quantity_supplied,
         quantity_used,
         end_quantity,
         unit_cost,
 
+        {{ dbt_utils.generate_surrogate_key(['date']) }} as date_sk,
         {{ dbt_utils.generate_surrogate_key(['supplier']) }} as supplier_sk,
         {{ dbt_utils.generate_surrogate_key(['ingredient']) }} as ingredient_sk
 

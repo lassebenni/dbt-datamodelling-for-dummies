@@ -9,13 +9,12 @@ final as (
 
     select
         sales_sk,
-        sale_date,
         sale_time,
-        sale_weekday,
         quantity_sold,
         unit_price,
         total_price,
 
+        {{ dbt_utils.generate_surrogate_key(['sale_date']) }} as date_sk,
         {{ dbt_utils.generate_surrogate_key(['employee_id']) }} as employee_sk,
         {{ dbt_utils.generate_surrogate_key(['product']) }} as product_sk
 
