@@ -8,3 +8,4 @@ logs
 target
 .user.yml
 dbt_packages/dbt_utils
+dbt_packages/dbt_date
