@@ -5,7 +5,7 @@ select
     {{ dbt_utils.star(from=ref('dim_ingredient'), relation_alias='ingredient', except=[
         "ingredient_sk", "product_sk"
     ]) }},
-    {{ dbt_utils.star(from=ref('dim_product'), relation_alias='product', except=[
+    {{ dbt_utils.star(from=ref('dim_product'), relation_alias='product', prefix='product_', except=[
         "product_sk"
     ]) }},
     {{ dbt_utils.star(from=ref('dim_supplier'), relation_alias='supplier', except=[
