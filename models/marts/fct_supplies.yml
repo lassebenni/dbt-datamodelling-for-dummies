@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: fct_supplies
+    description: ""
+    columns:
+      - name: supplies_sk
+      - name: initial_quantity
+      - name: quantity_supplied
+      - name: quantity_used
+      - name: end_quantity
+      - name: unit_cost
+      - name: date_sk
+      - name: supplier_sk
+      - name: ingredient_sk

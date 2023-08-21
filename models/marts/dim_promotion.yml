@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: dim_promotion
+    description: ""
+    columns:
+      - name: promotion_sk
+      - name: name
+      - name: start_date
+      - name: end_date
+      - name: description
+      - name: discount_rate
+      - name: is_holiday
+      - name: product_sk

@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: dim_shift
+    description: ""
+    columns:
+      - name: shift_sk
+      - name: date
+      - name: start_hour
+      - name: end_hour
+      - name: date_sk
+      - name: employee_sk

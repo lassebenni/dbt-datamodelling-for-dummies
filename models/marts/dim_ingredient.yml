@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: dim_ingredient
+    description: ""
+    columns:
+      - name: ingredient_sk
+      - name: ingredient
+      - name: quantity
+      - name: product_sk

@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: dim_employee
+    description: ""
+    columns:
+      - name: employee_sk
+      - name: employee_name
+      - name: employee_last_name
+      - name: employee_contact
+      - name: employee_date_of_birth
+      - name: employee_since
+      - name: position

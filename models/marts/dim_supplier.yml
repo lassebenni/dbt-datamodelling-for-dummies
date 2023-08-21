@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: dim_supplier
+    description: ""
+    columns:
+      - name: supplier_sk
+      - name: supplier_name
+      - name: supplier_type
+      - name: supplier_contact
+      - name: supplier_address

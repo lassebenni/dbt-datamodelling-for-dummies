@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: dim_product
+    description: ""
+    columns:
+      - name: product_sk
+      - name: name
+      - name: unit_cost
+      - name: unit_price

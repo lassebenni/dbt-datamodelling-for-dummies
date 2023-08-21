@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: fct_sales
+    description: ""
+    columns:
+      - name: sales_sk
+      - name: sale_time
+      - name: sale_date
+      - name: quantity_sold
+      - name: unit_price
+      - name: total_price
+      - name: employee_sk
+        tests:
+          - relationships:
+              to: ref('dim_employee')
+              field: employee_sk
+              meta:
+                relationship_type: many-to-one
+      - name: product_sk
+        tests:
+          - relationships:
+              to: ref('dim_product')
+              field: product_sk
+              meta:
+                relationship_type: many-to-one

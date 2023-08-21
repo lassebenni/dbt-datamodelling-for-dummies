@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: fct_reviews
+    description: ""
+    columns:
+      - name: review_sk
+      - name: description
+      - name: stars
+      - name: date_sk
