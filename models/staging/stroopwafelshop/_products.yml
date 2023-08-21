@@ -4,7 +4,7 @@ models:
   - name: types
     description: ""
     columns:
-      - name: product_name
+      - name: name
       - name: unit_cost
       - name: unit_price
       - name: ingredients
