@@ -1,20 +1,17 @@
-with raw_source as (
+with
+    raw_source as (select * from {{ source("stroopwafelshop", "reviews") }}),
 
-    select *
-    from {{ source('stroopwafelshop', 'reviews') }}
+    final as (
 
-),
+        select
+            cast(rating_id as int64) as review_id,
+            cast(description as string) as description,
+            cast(stars as int64) as stars,
+            cast(date as date) as date
 
-final as (
+        from raw_source
 
-    select
-        cast(rating_id as int64) as review_id,
-        cast(description as string) as description,
-        cast(stars as int64) as stars,
-        cast(date as date) as date
+    )
 
-    from raw_source
-
-)
-
-select * from final
+select *
+from final
