@@ -9,7 +9,7 @@ final as (
 
     select
         product_sk,
-        product_name,
+        name,
         round(unit_cost, 2) as unit_cost,
         round(unit_price, 2) as unit_price
 
