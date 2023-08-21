@@ -12,7 +12,8 @@ final as (
         shift_sk,
         date,
         weekday,
-        shift_hours,
+        start_hour,
+        end_hour,
 
         {{ dbt_utils.generate_surrogate_key(['employee_id']) }} as employee_sk
 
