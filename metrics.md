@@ -17,7 +17,7 @@ To determine the quantity of ingredients required for the production of a stroop
 ### Visualization and Insights:
 
 - **Stacked Bar Chart**: For each ingredient, use a stacked bar where:
-  - One segment represents the daily required quantity.
+  - One segment **rereleasereleasepresents** the daily required quantity.
   - The second segment represents the daily delivered quantity.
   
   If the delivered segment consistently exceeds the required segment, it indicates overstocking. Conversely, if the required segment is higher, it suggests potential shortages.
